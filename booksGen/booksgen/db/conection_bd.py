@@ -1,8 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from ..settings import uri_db
+from ..settings import Settings
 
+uri_db = Settings().DATABASE_URI
 engine = create_engine(url=uri_db)
 
 class ConectionDB:
