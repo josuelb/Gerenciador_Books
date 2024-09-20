@@ -16,3 +16,21 @@ def test_create_user(client):
     assert response.status_code == HTTPStatus.CREATED
     assert response.json()["username"] == "test@190"
 
+# Test de atualização
+def test_updated_user(client, user):
+    jsonResponse = {
+        'username': 'testStore',
+        'name': 'test',
+        'password': 'passtest'
+    }
+    response = client.put(
+        f'/users/{user.id}',
+        json=jsonResponse
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        "id": 1,
+        "username": "testStore",
+        "name": "test",
+    }

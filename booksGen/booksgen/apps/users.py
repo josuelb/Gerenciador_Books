@@ -12,7 +12,12 @@ from sqlalchemy.orm import Session
 
 from booksgen.db.conection_bd import ConectionDB
 from booksgen.models import UsersModel
-from booksgen.schemas.schema_users import UserSchema, UserSchemaPublic, UserSchemaList
+from booksgen.schemas.schema_users import (
+    UserSchema, 
+    UserSchemaPublic, 
+    UserSchemaPublicAlterations,
+    UserSchemaList
+)
 
 router_users = APIRouter(prefix='/users', tags=["users"])
 sessionDB = ConectionDB()
@@ -70,5 +75,34 @@ class Users:
 
         return db_user
     
+    @router_users.put(
+       "/{user_id}",
+       status_code=HTTPStatus.OK,
+       response_model=UserSchemaPublicAlterations
+    )
+    def updated_user(
+        user_id:int,
+        user: UserSchema,
+        session: SessionCurrent
+    ):
+        db_user = session.scalar(
+            select(UsersModel).where(
+                UsersModel.id == user_id
+            )
+        )
 
+        if not db_user:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail='User not found'
+            )
+        
+        db_user.username = user.username
+        db_user.name = user.name
+        db_user.password = user.password
+
+        session.commit()
+        session.refresh(db_user)
+
+        return db_user
 
