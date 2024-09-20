@@ -27,7 +27,7 @@ def session():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    table_registry.metadata.drop_all(engine)
+    table_registry.metadata.create_all(engine)
 
     with Session(engine) as session:
         yield session

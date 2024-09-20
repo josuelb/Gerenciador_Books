@@ -32,6 +32,9 @@ class Users:
         users = session.scalars(
             select(UsersModel)
         ).all()
+        
+        if not users:
+            return {'Users': None}
 
         return {'Users': users}
     
