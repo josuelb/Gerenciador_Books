@@ -16,3 +16,7 @@ class Settings(BaseSettings):
     )
 
     DATABASE_URI:str
+    ALGORITHM: str
+    SECRET_KEY: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    ZONE_INFO_HOUR: str
