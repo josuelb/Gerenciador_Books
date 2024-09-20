@@ -18,6 +18,7 @@ from booksgen.schemas.schema_users import (
     UserSchemaPublicAlterations,
     UserSchemaList
 )
+from booksgen.schemas.schema_messages import MessageDelete
 
 router_users = APIRouter(prefix='/users', tags=["users"])
 sessionDB = ConectionDB()
@@ -105,4 +106,30 @@ class Users:
         session.refresh(db_user)
 
         return db_user
+
+    @router_users.delete(
+        '/{user_id}',
+        status_code=HTTPStatus.OK,
+        response_model=MessageDelete
+    )
+    def deleted_user(
+        user_id: int,
+        session: SessionCurrent
+    ):
+        db_user=session.scalar(
+            select(UsersModel).where(
+                UsersModel.id == user_id
+            )
+        )
+
+        if not db_user:
+            raise HTTPException(
+                status_code=HTTPStatus.FORBIDDEN,
+                detail='Not enough permissions'
+            )
+
+        session.delete(db_user)
+        session.commit()
+
+        return {'message': 'User deleted'}
 

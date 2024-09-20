@@ -34,3 +34,15 @@ def test_updated_user(client, user):
         "username": "testStore",
         "name": "test",
     }
+
+
+# Test de deletação 
+def test_deleted_user(client, user):
+    response = client.delete(
+        url=f'/users/{user.id}',
+    )
+    
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'message': 'User deleted'
+    }
