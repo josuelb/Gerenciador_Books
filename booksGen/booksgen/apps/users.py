@@ -122,7 +122,7 @@ class Users:
             )
         )
 
-        if not db_user:
+        if db_user is None:
             raise HTTPException(
                 status_code=HTTPStatus.FORBIDDEN,
                 detail='Not enough permissions'
