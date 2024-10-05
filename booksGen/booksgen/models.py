@@ -19,6 +19,18 @@ class BookState(str, Enum):
     read = "Read"
     not_read = "Not Read"
 
+class BookGenere(str, Enum):
+    romance = "Romance"
+    fantasy = "Fantasy"
+    mystery = "Mystery"
+    horror = "Horror"
+    thriller = "Thriller"
+    sci_fi = "Science Fiction"
+    crime = "Crime"
+    classics = "Classics"
+    adventure = "Adventure"
+    manga = "Mangas"
+
 
 @table_registry.mapped_as_dataclass
 class UsersModel:
@@ -54,16 +66,28 @@ class BooksModel:
         primary_key=True,
         autoincrement=True
     )
-    nomebook: Mapped[str] = mapped_column(
+    namebook: Mapped[str] = mapped_column(
         String(100)
     )
     author: Mapped[str] = mapped_column(
         String(100)
     )
     yearbook: Mapped[int] = mapped_column()
+    edition: Mapped[int] = mapped_column()
+    genere: Mapped[BookGenere]
+    ISBN: Mapped[int] = mapped_column()
+    editionPublisher: Mapped[
+        str
+    ] = mapped_column(String(500))
+    
     summary: Mapped[str] = mapped_column(
         String(400)
     )
+    pageNum: Mapped[int]
+    language: Mapped[str] = mapped_column(
+        String(5)
+    )
+
     state: Mapped[BookState]
 
     user_id: Mapped[int] = mapped_column(
