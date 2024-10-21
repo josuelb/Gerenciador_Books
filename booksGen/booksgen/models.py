@@ -74,7 +74,7 @@ class BooksModel:
     )
     yearbook: Mapped[int] = mapped_column()
     edition: Mapped[int] = mapped_column()
-    genere: Mapped[BookGenere]
+    genere: Mapped[BookGenere] = mapped_column()
     ISBN: Mapped[int] = mapped_column()
     editionPublisher: Mapped[
         str
@@ -83,12 +83,12 @@ class BooksModel:
     summary: Mapped[str] = mapped_column(
         String(400)
     )
-    pageNum: Mapped[int]
+    pageNum: Mapped[int] = mapped_column()
     language: Mapped[str] = mapped_column(
         String(5)
     )
 
-    state: Mapped[BookState]
+    state: Mapped[BookState] = mapped_column()
 
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id")
