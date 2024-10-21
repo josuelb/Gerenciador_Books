@@ -5,13 +5,13 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from booksGen.booksgen.settings import Settings
-from booksGen.booksgen.models import table_registry
+from booksgen.models import table_registry
+from booksgen.settings import Settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option('sqlalchemy.url', Settings().DATABASE_URI)
+config.set_main_option('sqlalchemy.url', Settings().DATABASE_TESTS_URI)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
