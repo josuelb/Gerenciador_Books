@@ -6,6 +6,11 @@ class UserSchema(BaseModel):
     name: str
     password: str
 
+# Schema de atualização PATCH
+class UserSchemaP(BaseModel):
+    username: str | None
+    name: str | None = None
+    password: str | None
 
 # Schema do que será retornado
 class UserSchemaPublic(BaseModel):
@@ -23,4 +28,4 @@ class UserSchemaPublicAlterations(BaseModel):
 
 # Schema de listagem
 class UserSchemaList(BaseModel):
-    users: list[UserSchemaPublic]
+    users: list[UserSchemaPublic] | UserSchemaPublic

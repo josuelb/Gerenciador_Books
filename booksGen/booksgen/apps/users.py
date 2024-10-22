@@ -7,6 +7,7 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -16,9 +17,13 @@ from booksgen.schemas.schema_users import (
     UserSchema, 
     UserSchemaPublic, 
     UserSchemaPublicAlterations,
-    UserSchemaList
+    UserSchemaList, 
+    UserSchemaP
 )
-from booksgen.schemas.schema_messages import MessageDelete
+from booksgen.schemas.schema_messages import (
+    MessageDelete,
+    MessageJSON
+)
 
 router_users = APIRouter(prefix='/users', tags=["users"])
 sessionDB = ConectionDB()
@@ -28,21 +33,27 @@ SessionCurrent = Annotated[Session, Depends(sessionDB.get_session)]
 class Users:
 
     @router_users.get(
-        '/',
+        '/{user_id}',
         response_model=UserSchemaList,
         status_code=HTTPStatus.OK
     )
     def read_users(
+        user_id: int,
         session: SessionCurrent
     ):
-        users = session.scalars(
-            select(UsersModel)
-        ).all()
+        db_users = session.scalars(
+            select(UsersModel).where(
+                UsersModel.id == user_id
+            )
+        )
         
-        if not users:
-            return {'Users': None}
+        if not db_users:
+            raise HTTPException(
+                status_code=HTTPStatus.NO_CONTENT,
+                detail="User invalid or not exist"
+            )
 
-        return {'Users': users}
+        return UserSchemaList(users=db_users)
     
     @router_users.post(
         '/',
@@ -107,6 +118,40 @@ class Users:
 
         return db_user
 
+    @router_users.patch(
+        '/{user_id}',
+        status_code=HTTPStatus.OK,
+        response_model=UserSchemaPublic
+    )
+    def updated_user_one(
+        user_id: int,
+        user_update: UserSchemaP,
+        session: SessionCurrent
+    ):
+        db_user = session.scalar(
+            select(UsersModel).where(
+                UsersModel.id == user_id
+            )
+        )
+
+        if not db_user:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail="User not exist"
+            )
+        
+        for key, value in vars(user_update).items():
+            if value != None:
+                setattr(
+                    db_user, 
+                    key, 
+                    value
+                )
+        
+        session.commit()
+
+        return db_user
+
     @router_users.delete(
         '/{user_id}',
         status_code=HTTPStatus.OK,
@@ -131,5 +176,37 @@ class Users:
         session.delete(db_user)
         session.commit()
 
-        return {'message': 'User deleted'}
+        return MessageDelete(message='User deleted')
 
+    @router_users.head(
+        "/head/{user_id}",
+        status_code=HTTPStatus.OK
+    )
+    def head_user(
+        user_id: int,
+        session: SessionCurrent
+    ):
+        db_user: UsersModel = session.scalar(
+            select(UsersModel).where(
+                UsersModel.id == user_id
+            )
+        )
+
+        if not db_user:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, 
+                detail="User data not location"
+            )
+        
+        return Response(status_code=HTTPStatus.OK)
+
+    @router_users.options(
+        "/options/{user_id}",
+        status_code=HTTPStatus.OK,
+        response_model=MessageJSON
+    )
+    def options_users(
+        user_id: int,
+        session: SessionCurrent
+    ):
+        return MessageJSON(allow="GET, POST, PUT, DELETE, OPTIONS")
