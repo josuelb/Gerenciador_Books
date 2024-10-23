@@ -41,7 +41,7 @@ class Users:
         user_id: int,
         session: SessionCurrent
     ):
-        db_users = session.scalars(
+        db_users: UsersModel = session.scalars(
             select(UsersModel).where(
                 UsersModel.id == user_id
             )
@@ -63,7 +63,7 @@ class Users:
     def created_user(
         session: SessionCurrent, user: UserSchema
     ):
-        db_user = session.scalar(
+        db_user: UsersModel = session.scalar(
             select(UsersModel).where(
                 UsersModel.username==user.username
             )
@@ -161,7 +161,7 @@ class Users:
         user_id: int,
         session: SessionCurrent
     ):
-        db_user=session.scalar(
+        db_user= session.scalar(
             select(UsersModel).where(
                 UsersModel.id == user_id
             )
