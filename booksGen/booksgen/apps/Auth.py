@@ -50,7 +50,7 @@ class Auth:
         ):
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,
-                detail="Incorret Username or password"
+                detail='Incorret Username or password'
             )
         
         access_token = create_access_token(
