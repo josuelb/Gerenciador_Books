@@ -23,33 +23,33 @@ from booksgen.schemas.schema_auth import TokenSchema
 from booksgen.models import UsersModel
 
 router_auth = APIRouter(prefix="/auth", tags=["auth"])
-SESSION_DB: ConectionDB = ConectionDB()
 
 OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
-SessionCurrent = Annotated[Session, Depends(SESSION_DB.get_session)]
+SessionCurrent = Annotated[Session, Depends(ConectionDB.get_session)]
 
 
 class Auth:
 
     @router_auth.post(
         '/token',
-        response_model=TokenSchema
+        response_model=TokenSchema,
+        status_code=HTTPStatus.OK
     )
     def login_access_token(
-        form_token: OAuth2Form,
+        form_data: OAuth2Form,
         session: SessionCurrent
     ):
         db_user: UsersModel = session.scalar(
             select(UsersModel).where(
-                (UsersModel.username == form_token.username)
+                (UsersModel.username == form_data.username)
             )
         )
 
         if not db_user or not verify_password(
-            form_token.password, db_user.password
+            form_data.password, db_user.password
         ):
             raise HTTPException(
-                status_code=HTTPStatus.UNAUTHORIZED,
+                status_code=HTTPStatus.BAD_REQUEST,
                 detail='Incorret Username or password'
             )
         

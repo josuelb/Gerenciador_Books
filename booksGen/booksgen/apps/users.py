@@ -3,6 +3,7 @@ View do Users, na qual tem a responsabilidade de
 fazer os retornos dos metodos http da url.
 """
 
+import json
 from http import HTTPStatus
 from typing import Annotated
 
@@ -12,6 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from booksgen.db.conection_bd import ConectionDB
+from booksgen.db.connection_db_redis import ConnectionRedis
 from booksgen.models import UsersModel
 from booksgen.schemas.schema_users import (
     UserSchema, 
@@ -24,36 +26,43 @@ from booksgen.schemas.schema_messages import (
     MessageDelete,
     MessageJSON
 )
+from booksgen.security import (
+    get_current_user,
+    get_password_hash
+)
+from booksgen.db.connection_db_redis import ConnectionRedis
+
 
 router_users = APIRouter(prefix='/users', tags=["users"])
-sessionDB = ConectionDB()
-SessionCurrent = Annotated[Session, Depends(sessionDB.get_session)]
+SessionCurrent = Annotated[Session, Depends(ConectionDB.get_session)]
+
+def SETTING_MEMORY_CACHE(user, Redis):
+    try:
+        Redis.set(f"user:{user.username}", json.dumps(user.dict()), ex=60*5)
+    except:
+        HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail="Cache Memory Error"
+        )
 
 
 class Users:
 
     @router_users.get(
-        '/{user_id}',
+        '/',
         response_model=UserSchemaList,
         status_code=HTTPStatus.OK
     )
     def read_users(
-        user_id: int,
-        session: SessionCurrent
+        UserCurrent: UsersModel = Depends(get_current_user)
     ):
-        db_users: UsersModel = session.scalars(
-            select(UsersModel).where(
-                UsersModel.id == user_id
-            )
-        )
-        
-        if not db_users:
+        if not UserCurrent:
             raise HTTPException(
-                status_code=HTTPStatus.NO_CONTENT,
-                detail="User invalid or not exist"
+                status_code=HTTPStatus.BAD_CONTENT,
+                detail="Not enough permission"
             )
 
-        return UserSchemaList(users=db_users)
+        return {"users": UserCurrent}
     
     @router_users.post(
         '/',
@@ -61,7 +70,9 @@ class Users:
         response_model=UserSchemaPublic
     )
     def created_user(
-        session: SessionCurrent, user: UserSchema
+        session: SessionCurrent, 
+        user: UserSchema, 
+        redis = Depends(ConnectionRedis().get_session_redis)
     ):
         db_user: UsersModel = session.scalar(
             select(UsersModel).where(
@@ -78,12 +89,14 @@ class Users:
         db_user = UsersModel(
             username = user.username, 
             name = user.name,
-            password = user.password
+            password = get_password_hash(user.password)
         )
 
         session.add(db_user)
         session.commit()
         session.refresh(db_user)
+
+        SETTING_MEMORY_CACHE(db_user, redis)        
 
         return db_user
     
@@ -94,29 +107,32 @@ class Users:
     )
     def updated_user(
         user_id:int,
-        user: UserSchema,
-        session: SessionCurrent
+        user: UserSchemaP,
+        session: SessionCurrent,
+        redis = Depends(ConnectionRedis().get_session_redis)
     ):
-        db_user = session.scalar(
+        user_db = session.scalar(
             select(UsersModel).where(
                 UsersModel.id == user_id
             )
-        )
+        ) 
 
-        if not db_user:
+        if user_db.id != user_id:
             raise HTTPException(
-                status_code=HTTPStatus.NOT_FOUND,
-                detail='User not found'
+                status_code=HTTPStatus.BAD_CONTENT,
+                detail="Not enough permission"
             )
         
-        db_user.username = user.username
-        db_user.name = user.name
-        db_user.password = user.password
+        user_db.username = user.username
+        user_db.name = user.name
+        user_db.password = user.password
 
         session.commit()
-        session.refresh(db_user)
+        session.refresh(user_db)
 
-        return db_user
+        SETTING_MEMORY_CACHE(user_db, redis)
+
+        return user_db
 
     @router_users.patch(
         '/{user_id}',
@@ -126,31 +142,35 @@ class Users:
     def updated_user_one(
         user_id: int,
         user_update: UserSchemaP,
-        session: SessionCurrent
+        session: SessionCurrent,
+        redis = Depends(ConnectionRedis().get_session_redis)
     ):
-        db_user = session.scalar(
+        user_db = session.scalar(
             select(UsersModel).where(
                 UsersModel.id == user_id
             )
-        )
+        )  
 
-        if not db_user:
+        if user_db.id != user_id:
             raise HTTPException(
-                status_code=HTTPStatus.NOT_FOUND,
-                detail="User not exist"
+                status_code=HTTPStatus.BAD_CONTENT,
+                detail="Not enough permission"
             )
-        
+
         for key, value in vars(user_update).items():
             if value != None:
                 setattr(
-                    db_user, 
+                    user_db, 
                     key, 
                     value
                 )
         
         session.commit()
+        session.refresh(user_db)
 
-        return db_user
+        SETTING_MEMORY_CACHE(user_db, redis)
+
+        return user_db
 
     @router_users.delete(
         '/{user_id}',
@@ -159,21 +179,21 @@ class Users:
     )
     def deleted_user(
         user_id: int,
-        session: SessionCurrent
+        session: SessionCurrent,
     ):
-        db_user= session.scalar(
+        user_db = session.scalar(
             select(UsersModel).where(
                 UsersModel.id == user_id
             )
-        )
+        )  
 
-        if db_user is None:
+        if user_db.id != user_id:
             raise HTTPException(
-                status_code=HTTPStatus.FORBIDDEN,
-                detail='Not enough permissions'
+                status_code=HTTPStatus.BAD_CONTENT,
+                detail="Not enough permission"
             )
-
-        session.delete(db_user)
+        
+        session.delete(user_db)
         session.commit()
 
         return MessageDelete(message='User deleted')
@@ -184,15 +204,11 @@ class Users:
     )
     def head_user(
         user_id: int,
-        session: SessionCurrent
+        session: SessionCurrent, 
+        UserCurrent: UsersModel = Depends(get_current_user)  
     ):
-        db_user: UsersModel = session.scalar(
-            select(UsersModel).where(
-                UsersModel.id == user_id
-            )
-        )
 
-        if not db_user:
+        if not UserCurrent:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND, 
                 detail="User data not location"
@@ -201,12 +217,11 @@ class Users:
         return Response(status_code=HTTPStatus.OK)
 
     @router_users.options(
-        "/options/{user_id}",
+        "/options",
         status_code=HTTPStatus.OK,
         response_model=MessageJSON
     )
     def options_users(
-        user_id: int,
         session: SessionCurrent
     ):
         return MessageJSON(allow="GET, POST, PUT, DELETE, OPTIONS")

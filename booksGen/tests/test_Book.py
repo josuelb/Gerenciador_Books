@@ -5,7 +5,7 @@ from booksgen.models import BookState, BookGenere
 
 
 # Test de criação
-def test_created_book(client, user):
+def test_created_book(client, user, token):
     book_test = {
         "namebook" : "Sample Book",
         "author" : "Author Name",
@@ -22,6 +22,7 @@ def test_created_book(client, user):
     
     response = client.post(
         f"/users/books/{user.id}/",
+        headers={'Authorization': f'Bearer {token}'},
         json=book_test
     )
 
@@ -44,16 +45,17 @@ def test_created_book(client, user):
     }
 
 
-def test_list_all_books(client, user):
+def test_list_all_books(client, user, token):
     response = client.get(
-        f'/users/books/{user.id}'
+        f'/users/books/',
+        headers={'Authorization': f'Bearer {token}'}
     )
 
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"books": []}
 
-def test_update_all_book(client, user, book):
+def test_update_all_book(client, user, book, token):
     book_auteration = {
         "namebook": "Updated Sample Book",
         "author": "Updated Author Name",
@@ -69,7 +71,8 @@ def test_update_all_book(client, user, book):
     }
 
     response = client.put(
-        f'/users/books/{user.id}/{book.id}/', 
+        f'/users/books/{book.id}/', 
+        headers={'Authorization': f'Bearer {token}'},
         json=book_auteration
     )
 
@@ -90,9 +93,10 @@ def test_update_all_book(client, user, book):
         "user_id": user.id
     }
 
-def test_update_select_book(client, user, book):
+def test_update_select_book(client, user, book, token):
     response = client.patch(
-        f'/users/books/{user.id}/{book.id}/', 
+        f'/users/books/{book.id}/', 
+        headers={'Authorization': f'Bearer {token}'},
         json={
             "editionPublisher": "Updated Publisher Name"
         }
@@ -115,9 +119,10 @@ def test_update_select_book(client, user, book):
         "user_id": user.id
     }
 
-def test_delete_one_book(client, user, book):
+def test_delete_one_book(client, user, book, token):
     response = client.delete(
-        f'/users/books/delete_one/{user.id}/{book.id}/'
+        f'/users/books/delete_one/{book.id}/',
+        headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -125,9 +130,10 @@ def test_delete_one_book(client, user, book):
         "message": f"ID {book.id} Book successfully deleted"
     }
 
-def test_delete_all_books(client, user):
+def test_delete_all_books(client, user, token):
     response = client.delete(
-        f'/users/books/{user.id}/all/'
+        f'/users/books/{user.id}/all/',
+        headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.OK

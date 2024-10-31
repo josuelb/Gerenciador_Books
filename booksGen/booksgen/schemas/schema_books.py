@@ -33,8 +33,6 @@ class BookSchemaP(BaseModel):
     language: str | None = None
     state: BookState = None
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 # Schema de retorno
 class BookSchemaPublic(BaseModel):

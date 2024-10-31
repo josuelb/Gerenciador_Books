@@ -3,13 +3,18 @@ from http import HTTPStatus
 from booksgen.schemas.schema_users import UserSchemaPublic
 
 
-def test_list_user(client, user):
+def test_list_user(client, token):
     response = client.get(
-        f"/users/{user.id}"
+        f"/users/",
+        headers={'Authorization': f'Bearer {token}'}
     )
+    
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["users"][0]["id"] == user.id
+    
+    users = response.json()["users"]
+
+    assert users["id"] == 1
 
 def test_create_user(client):
     response = client.post(
@@ -24,8 +29,7 @@ def test_create_user(client):
     assert response.status_code == HTTPStatus.CREATED
     assert response.json()["username"] == "test@190"
 
-# Test de atualização
-def test_updated_user(client, user):
+def test_updated_user(client, user, token):
     jsonResponse = {
         'username': 'testStore',
         'name': 'test',
@@ -33,6 +37,7 @@ def test_updated_user(client, user):
     }
     response = client.put(
         f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json=jsonResponse
     )
 
@@ -44,10 +49,10 @@ def test_updated_user(client, user):
     }
 
 
-# Test de deletação 
-def test_deleted_user(client, user):
+def test_deleted_user(client, user, token):
     response = client.delete(
         url=f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -55,16 +60,17 @@ def test_deleted_user(client, user):
         'message': 'User deleted'
     }
 
-def test_head_user_OK(client, user):
+def test_head_user_OK(client, user, token):
     response = client.head(
-        f"/users/head/{user.id}"
+        f"/users/head/{user.id}",
+        headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.OK
 
 def test_options_users_JSON(client, user):
     response = client.options(
-        f"/users/options/{user.id}"
+        f"/users/options"
     )
 
     assert response.status_code == HTTPStatus.OK

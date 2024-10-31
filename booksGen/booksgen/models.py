@@ -44,7 +44,7 @@ class UsersModel:
     )
     username: Mapped[str] = mapped_column(String(50), unique=True)
     name: Mapped[str] = mapped_column(String(100))
-    password: Mapped[str] = mapped_column(String(30))
+    password: Mapped[str] = mapped_column(String(100))
     create_all: Mapped[datetime] = mapped_column(
         init=False, server_default=func.now()
     )
@@ -54,6 +54,16 @@ class UsersModel:
         back_populates="user",
         cascade="all, delete-orphan"
     )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+            "name": self.name,
+            "created_all": self.create_all.isoformat() if self.create_all else None,
+            "books": [book.to_dict() for book in self.books] if self.books else []
+        }
+        
 
 
 @table_registry.mapped_as_dataclass
@@ -95,5 +105,20 @@ class BooksModel:
     )
 
     user: Mapped[UsersModel] = relationship(init=False, back_populates='books')
-
    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "namebook": self.namebook,
+            "author": self.author,
+            "yearbook": self.yearbook,
+            "edition": self.edition,
+            "genere": self.genere,
+            "ISBN": self.ISBN,
+            "editionPublisher": self.editionPublisher,
+            "summary": self.summary,
+            "pageNum": self.pageNum,
+            "language": self.language,
+            "state": self.state,
+            "user_id": self.user_id
+        }

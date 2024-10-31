@@ -19,6 +19,8 @@ class Settings(BaseSettings):
 
     DATABASE_URI:str
     DATABASE_TESTS_URI: str
+    PORT_REDIS: int
+    HOST_REDIS: str
     ALGORITHM: str
     SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int

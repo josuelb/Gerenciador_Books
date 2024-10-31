@@ -1,8 +1,9 @@
 import pytest 
 
+from http import HTTPStatus
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from booksgen.main import app
 from booksgen.models import (
@@ -14,14 +15,18 @@ from booksgen.models import (
 )
 from booksgen.db.conection_bd import ConectionDB
 from booksgen.settings import Settings
+from booksgen.security import (
+    get_password_hash, 
+    create_access_token
+)
 
 @pytest.fixture
 def client(session):
     def get_session_override():
         return session
-
+    
+    app.dependency_overrides[ConectionDB.get_session] = get_session_override
     with TestClient(app) as client:
-        app.dependency_overrides[ConectionDB().get_session] = get_session_override
         yield client 
 
     app.dependency_overrides.clear()
@@ -39,11 +44,14 @@ def session():
 
 @pytest.fixture
 def user(session):
-    user: UsersModel = UsersModel("testStore", "test", "testtest")
-
+    pwd = "testtest"
+    user: UsersModel = UsersModel("testStore", "test", password=get_password_hash(pwd))
+    
     session.add(user)
     session.commit()
     session.refresh(user)
+
+    user.clean_password = pwd
 
     return user
 
@@ -69,3 +77,21 @@ def book(session, user):
     session.refresh(book)
 
     return book
+
+@pytest.fixture
+def token(client, user):
+    response = client.post(
+        "/auth/token",
+        data={
+            "username": user.username, 
+            "password": user.clean_password
+        }
+    )
+
+
+    assert response.status_code == HTTPStatus.OK
+    jwt = response.json()
+
+    assert 'access_token' in jwt
+
+    return jwt['access_token']
