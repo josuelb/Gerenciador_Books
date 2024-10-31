@@ -14,8 +14,6 @@ em uma versão estável.
 
 ## Estrutura do projeto 
 
-# Estrutura do Projeto
-
 ```plaintext
 ├── Gerenciador_Books
 |   ├── .venv
@@ -115,6 +113,19 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 ```
 
+## API screen
+
+A url deve ir ate o ***/docs*** no caso que querer usar de forma simplificada.
+Os resultados serão esse:
+
+![Img inicial](https://github.com/josuelb/Gerenciador_Books/blob/9faf2ec526389418c0bf08b7ee7905d49f1df294/imgs_readme/start_docs_1.png)
+
+![Img inicial](https://github.com/josuelb/Gerenciador_Books/blob/9faf2ec526389418c0bf08b7ee7905d49f1df294/imgs_readme/start_docs_2.png)
+
+#### Campo de Login 
+
+![Img authenticação](https://github.com/josuelb/Gerenciador_Books/blob/9faf2ec526389418c0bf08b7ee7905d49f1df294/imgs_readme/start_docs_3.png)
+
 ## Passos pra startar a api
 
 ### Inicializar o redis e o banco de dados  
@@ -176,8 +187,13 @@ Para certifica-se que esta tudo bem gere os testes.
 pytest -vv
 ```
 
+![Img test](https://github.com/josuelb/Gerenciador_Books/blob/9faf2ec526389418c0bf08b7ee7905d49f1df294/imgs_readme/tests_sucess.png)
+
 ### Iniciar a api
 
 ```cmd
 fastapi dev booksGen/bookgen/main.py
 ```
+
+![Img start](https://github.com/josuelb/Gerenciador_Books/blob/9faf2ec526389418c0bf08b7ee7905d49f1df294/imgs_readme/start.png)
+
